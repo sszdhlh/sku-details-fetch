@@ -1,8 +1,11 @@
 import openpyxl
 
+def convert_mm_to_cm(value):
+    return value / 10
+
 # 读取两个xlsx文件
 template_wb = openpyxl.load_workbook('template.xlsx')
-rasson_wb = openpyxl.load_workbook('work.xlsx')
+rasson_wb = openpyxl.load_workbook('mlds-list.xlsx')
 
 template_ws = template_wb["SKUs"]
 rasson_ws = rasson_wb.active
@@ -24,12 +27,12 @@ for row in range(2, rasson_ws.max_row + 1):
         sku_details[sku] = {"weight": [], "length": [], "width": [], "height": []}
 
     try:
-        packing_size = packing_size_raw.replace('m', '').split('=')[0].strip()
-        length, width, height = map(float, packing_size.split('*'))
+        length, width, height = map(lambda x: convert_mm_to_cm(float(x)), packing_size_raw.split('*'))
+
         sku_details[sku]["weight"].append(weight)
-        sku_details[sku]["length"].append(length*100)
-        sku_details[sku]["width"].append(width*100)
-        sku_details[sku]["height"].append(height*100)
+        sku_details[sku]["length"].append(length)
+        sku_details[sku]["width"].append(width)
+        sku_details[sku]["height"].append(height)
     except Exception as e:
         print(f"在第{row}行遇到了问题: {e}")
 
@@ -60,4 +63,4 @@ for sku, details in sku_details.items():
     total_ws.cell(row=current_row, column=5).value = total_height
     current_row += 1
 
-template_wb.save('processed_template.xlsx')
+template_wb.save('processed_template1.xlsx')
