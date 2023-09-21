@@ -2,15 +2,15 @@ import openpyxl
 
 # 读取两个xlsx文件
 template_wb = openpyxl.load_workbook('template.xlsx')
-rasson_wb = openpyxl.load_workbook('Rasson包装.xlsx')
+rasson_wb = openpyxl.load_workbook('work.xlsx')
 
 template_ws = template_wb.active
 rasson_ws = rasson_wb.active
 
 # 获取Rasson包装.xlsx中的必要列索引
-sku_col = 2
-packing_size_col = 6
-weight_col = 8
+sku_col = 1
+packing_size_col = 2
+weight_col = 3
 
 # 从Rasson包装.xlsx中创建SKU到详情的映射
 sku_details = {}
@@ -20,7 +20,7 @@ for row in range(2, rasson_ws.max_row + 1):
     packing_size_raw = rasson_ws.cell(row=row, column=packing_size_col).value
 
     # 进行检查
-    if not packing_size_raw or '*' not in packing_size_raw:
+    if packing_size_raw is None or not isinstance(packing_size_raw, str) or '*' not in packing_size_raw:
         print(f"在第{row}行遇到了问题: {packing_size_raw}")
         continue
 
@@ -38,13 +38,15 @@ for row in range(2, rasson_ws.max_row + 1):
 # 更新template.xlsx中的数据
 for row in range(2, template_ws.max_row + 1):
     sku = template_ws.cell(row=row, column=1).value
-    if sku in sku_details:
-        weight, length, width, height = sku_details[sku]
-        template_ws.cell(row=row, column=3).value = weight
-        template_ws.cell(row=row, column=4).value = length
-        template_ws.cell(row=row, column=5).value = width
-        template_ws.cell(row=row, column=6).value = height
-        template_ws.cell(row=row, column=7).value = 1
+    details = sku_details.get(sku, None)
+    if details:
+        weight, length, width, height = details
+        template_ws.cell(row=row, column=2).value = weight
+        template_ws.cell(row=row, column=3).value = length
+        template_ws.cell(row=row, column=4).value = width
+        template_ws.cell(row=row, column=5).value = height
+        template_ws.cell(row=row, column=6).value = 1
+    else:
+        print(f"没有找到SKU {sku} 对应的数据")
 
 template_wb.save('processed_template.xlsx')
-
